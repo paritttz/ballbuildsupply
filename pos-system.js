@@ -182,7 +182,13 @@ class DataManager {
     }
 
 function showBackupSettings() {
-    document.getElementById('settingsContent').innerHTML = `
+    const container = document.getElementById('settingsContent');
+    if (!container) {
+        console.warn('ไม่พบ element id="settingsContent"');
+        return;
+    }
+
+    container.innerHTML = `
         <div class="backup-settings">
             <h3>สำรองข้อมูล</h3>
             
@@ -195,10 +201,10 @@ function showBackupSettings() {
             <div class="data-summary">
                 <h4>สรุปข้อมูลในระบบ:</h4>
                 <ul>
-                    <li>สินค้า: ${products.length} รายการ</li>
-                    <li>ลูกค้า: ${customers.length} คน</li>
-                    <li>การขาย: ${sales.length} รายการ</li>
-                    <li>ผู้ใช้: ${users.length} คน</li>
+                    <li>สินค้า: ${Array.isArray(products) ? products.length : 0} รายการ</li>
+                    <li>ลูกค้า: ${Array.isArray(customers) ? customers.length : 0} คน</li>
+                    <li>การขาย: ${Array.isArray(sales) ? sales.length : 0} รายการ</li>
+                    <li>ผู้ใช้: ${Array.isArray(users) ? users.length : 0} คน</li>
                 </ul>
             </div>
             
@@ -211,6 +217,7 @@ function showBackupSettings() {
         </div>
     `;
 }
+
 
 // ฟังก์ชันการตั้งค่า
 function toggleSync() {
