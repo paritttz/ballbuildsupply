@@ -734,7 +734,6 @@
     </style>
 </head>
 <body>
-    <script src="pos-system.js"></script>
     <!-- Login Screen -->
     <div id="loginScreen" class="container">
         <div class="login-screen">
@@ -1066,7 +1065,7 @@ class DataManager {
             document.cookie = `${key}=${JSON.stringify(data)}; expires=Fri, 31 Dec 9999 23:59:59 GMT; path=/`;
             
             // ซิงค์กับ Google Sheets (async)
-            this.syncToGoogleSheets(key, data);
+            DataManager.syncToGoogleSheets(key, data);
         } catch (error) {
             console.warn('Cannot save to cookie:', error);
         }
@@ -2497,6 +2496,9 @@ class DataManager {
             document.getElementById('loginUsername').focus();
         }, 100);
     </script>
+
+      <!-- ✅ เชื่อม JavaScript หลัง DOM โหลดครบ -->
+  <script src="pos-system.js"></script>
 </body>
 </html>
                 
