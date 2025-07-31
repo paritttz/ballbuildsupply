@@ -1308,6 +1308,43 @@ const savedProducts = DataManager.load('products', []);
             }
         }
 
+        // ฟังก์ชันซิงค์ข้อมูลไป Google Sheets
+async function syncToGoogle() {
+    const result = await DataManager.syncToGoogleSheets();
+    if (result.success) {
+        alert('ซิงค์ข้อมูลสำเร็จ!');
+    } else {
+        alert('ซิงค์ข้อมูลล้มเหลว: ' + result.message);
+    }
+}
+
+// ฟังก์ชันโหลดข้อมูลจาก Google Sheets
+async function loadFromGoogle() {
+    const result = await DataManager.loadFromGoogleSheets();
+    if (result.success) {
+        // รีเฟรชหน้าจอหรืออัปเดต UI
+        location.reload();
+    } else {
+        alert('โหลดข้อมูลล้มเหลว: ' + result.message);
+    }
+}
+
+// ทดสอบการเชื่อมต่อ
+async function testConnection() {
+    const result = await DataManager.testConnection();
+    alert(result.message);
+}
+
+        javascriptfunction saveProduct() {
+    // บันทึกข้อมูลเก่า
+    products.push(newProduct);
+    
+    // ใช้ DataManager แทน localStorage
+    DataManager.save('products', products);
+    
+    // ข้อมูลจะ auto-sync เองตาม DataManager
+}
+        
         // ข้อมูลผู้ใช้เริ่มต้น
         let users = DataManager.load('users', [
             { id: 1, username: 'admin', password: 'admin', fullName: 'ผู้จัดการระบบ', role: 'admin', active: true },
