@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
+    <script src="datamanager.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ball Build Supply - POS System</title>
@@ -731,6 +732,21 @@
                 box-shadow: none;
             }
         }
+        .sync-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    margin: 0 5px;
+    transition: transform 0.2s;
+}
+
+.sync-btn:hover {
+    transform: translateY(-2px);
+}
     </style>
 </head>
 <body>
@@ -875,6 +891,12 @@
                     </div>
                 </div>
                 <button class="btn-primary" onclick="addProduct()">เพิ่มสินค้า</button>
+                <button onclick="syncToGoogle()" class="sync-btn">
+    📤 ซิงค์ข้อมูล
+</button>
+<button onclick="loadFromGoogle()" class="sync-btn">
+    📥 โหลดข้อมูล
+</button>
             </div>
 
             <div id="productList">
@@ -1054,6 +1076,13 @@
     <script>
 
             
+        javascript// เก่า
+localStorage.setItem('products', JSON.stringify(products));
+const savedProducts = JSON.parse(localStorage.getItem('products') || '[]');
+
+// ใหม่
+DataManager.save('products', products);
+const savedProducts = DataManager.load('products', []);
         
         // ระบบจัดการข้อมูล LocalStorage และ Google Sheets
         class DataManager {
@@ -1645,7 +1674,7 @@
                 cartItem.innerHTML = `
                     <div class="cart-item-header">
                         <div class="item-name">${item.name} (${item.code})</div>
-                        <button class="remove-btn" onclick="removeFromCart(${index})">ลบ</button>
+                        < class="remove-btn" onclick="removeFromCart(${index})">ลบ</button>
                     </div>
                     
                     <div class="cart-controls">
