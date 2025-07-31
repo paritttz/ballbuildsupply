@@ -1797,17 +1797,6 @@ class DataManager {
                 return;
             }
 
-            const newProduct = {
-                id: productIdCounter++,
-                name,
-                code,
-                category,
-                unitQty,
-                boxQty,
-                retailPrice,
-                wholesalePrice,
-                promoPrice
-            };
 
             products.push(newProduct);
             filteredProducts = [...products];
@@ -1894,13 +1883,6 @@ class DataManager {
                 return;
             }
 
-            const newCustomer = {
-                id: customerIdCounter++,
-                name,
-                address,
-                phone,
-                taxId
-            };
 
             customers.push(newCustomer);
             DataManager.save('customers', customers);
