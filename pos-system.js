@@ -3,7 +3,7 @@
 
 // ระบบจัดการข้อมูล LocalStorage และ Google Sheets
 class DataManager {
-    static GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzgXdar8QI9OjNH641UwYp0SHGbi-zEjRErY8Qhz7guoz30iZuqbyMaHeayG66ybkU/exec'; // แก้ไข URL ของคุณ
+    static GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby5pcj5a89D5K02ngmHDlcISUovhFZCqYJfP2-mBduT9rBMN_IKnYI6mdwqcfBAa9w/exec'; // แก้ไข URL ของคุณ
     static syncEnabled = true;
     static lastSyncTime = null;
 
