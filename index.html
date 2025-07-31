@@ -1669,15 +1669,7 @@ class DataManager {
                 return sum + (totalPrice - discountAmount);
             }, 0);
 
-            // บันทึกการขาย
-            const sale = {
-                id: saleId,
-                date: saleDate,
-                customer: selectedCustomer,
-                seller: selectedSeller,
-                items: [...cart],
-                total: total
-            };
+
             sales.push(sale);
 
             // บันทึกข้อมูล
