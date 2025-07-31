@@ -168,18 +168,22 @@ class DataManager {
         // สร้างข้อความใหม่
         const statusDiv = document.createElement('div');
         statusDiv.id = 'syncStatus';
-        statusDiv.style.cssText = `
-            position: fixed;
-            top: 80px;
-            right: 20px;
-            padding: 10px 15px;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: bold;
-            z-index: 1001;
-            max-width: 300px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    }
+// ✅ แก้ให้ปิด backtick ถูกต้อง
+statusDiv.style.cssText = `
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    padding: 10px 15px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: bold;
+    z-index: 1001;
+    max-width: 300px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    background-color: white;
+    color: black;
+`;
+        document.body.appendChild(statusDiv);
 
 function showBackupSettings() {
     const container = document.getElementById('settingsContent');
