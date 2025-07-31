@@ -1052,122 +1052,32 @@
     </div>
 
     <script>
-// เพิ่มใน script section ของไฟล์ HTML
-
-// URL ของ Google Apps Script Web App
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby5pcj5a89D5K02ngmHDlcISUovhFZCqYJfP2-mBduT9rBMN_IKnYI6mdwqcfBAa9w/exec';
-
-// ระบบจัดการข้อมูล LocalStorage + Google Sheets
-class DataManager {
-    static save(key, data) {
-        try {
-            // บันทึกใน cookie (local backup)
-            document.cookie = `${key}=${JSON.stringify(data)}; expires=Fri, 31 Dec 9999 23:59:59 GMT; path=/`;
-            
-            // ซิงค์กับ Google Sheets (async)
-            DataManager.syncToGoogleSheets(key, data);
-        } catch (error) {
-            console.warn('Cannot save to cookie:', error);
-        }
-    }
-
-    static load(key, defaultValue = null) {
-        try {
-            const cookies = document.cookie.split(';');
-            for (let cookie of cookies) {
-                const [name, value] = cookie.trim().split('=');
-                if (name === key) {
-                    return JSON.parse(decodeURIComponent(value));
+        // ระบบจัดการข้อมูล LocalStorage
+        class DataManager {
+            static save(key, data) {
+                try {
+                    document.cookie = `${key}=${JSON.stringify(data)}; expires=Fri, 31 Dec 9999 23:59:59 GMT; path=/`;
+                } catch (error) {
+                    console.warn('Cannot save to cookie, using memory storage');
                 }
             }
-            return defaultValue;
-        } catch (error) {
-            console.warn('Cannot load from cookie:', error);
-            return defaultValue;
-        }
-    }
 
-    static async syncToGoogleSheets(key, data) {
-        if (!GOOGLE_SCRIPT_URL) return;
-        
-        try {
-            let action = '';
-            let payload = {};
-            
-            switch(key) {
-                case 'products':
-                    // ซิงค์ทีละรายการเมื่อมีการเพิ่ม/แก้ไข
-                    return;
-                case 'customers':
-                    return;
-                case 'sales':
-                    return;
-                case 'users':
-                    return;
-                case 'settings':
-                    action = 'saveSettings';
-                    payload = { settings: data };
-                    break;
-                default:
-                    return;
+            static load(key, defaultValue = null) {
+                try {
+                    const cookies = document.cookie.split(';');
+                    for (let cookie of cookies) {
+                        const [name, value] = cookie.trim().split('=');
+                        if (name === key) {
+                            return JSON.parse(decodeURIComponent(value));
+                        }
+                    }
+                    return defaultValue;
+                } catch (error) {
+                    console.warn('Cannot load from cookie, using default value');
+                    return defaultValue;
+                }
             }
-            
-            await fetch(GOOGLE_SCRIPT_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-        } catch (error) {
-            console.warn('Sync to Google Sheets failed:', error);
         }
-    }
-
-    // ซิงค์ข้อมูลเฉพาะรายการ
-    static async syncSingleItem(type, item) {
-        if (!GOOGLE_SCRIPT_URL) return;
-        
-        try {
-            const actions = {
-                'product': 'saveProduct',
-                'customer': 'saveCustomer',
-                'sale': 'saveSale',
-                'user': 'saveUser'
-            };
-            
-            const action = actions[type];
-            if (!action) return;
-            
-            const payload = { action, [type]: item };
-            
-            const response = await fetch(GOOGLE_SCRIPT_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            
-            const result = await response.json();
-            if (!result.success) {
-                console.error('Sync failed:', result.error);
-            }
-        } catch (error) {
-            console.warn('Sync single item failed:', error);
-        }
-    }
-
-    // ดึงข้อมูลจาก Google Sheets
-    static async loadFromGoogleSheets() {
-        if (!GOOGLE_SCRIPT_URL) return null;
-        
-        try {
-            const response = await fetch(GOOGLE_SCRIPT_URL + '?action=getAllData');
-            const data = await response.json();
-            return data;
-        } catch (error) {
-            console.warn('Load from Google Sheets failed:', error);
-            return null;
-        }
-    }
-}
 
         // ข้อมูลผู้ใช้เริ่มต้น
         let users = DataManager.load('users', [
@@ -1655,10 +1565,6 @@ class DataManager {
                 return;
             }
 
-                const sale = {
-        id: saleId, date: saleDate, customer: selectedCustomer,
-        seller: selectedSeller, items: [...cart], total: total
-    };
             const saleId = 'INV' + String(saleIdCounter++).padStart(6, '0');
             const saleDate = new Date().toISOString();
             const total = cart.reduce((sum, item) => {
@@ -1669,15 +1575,20 @@ class DataManager {
                 return sum + (totalPrice - discountAmount);
             }, 0);
 
-
+            // บันทึกการขาย
+            const sale = {
+                id: saleId,
+                date: saleDate,
+                customer: selectedCustomer,
+                seller: selectedSeller,
+                items: [...cart],
+                total: total
+            };
             sales.push(sale);
 
             // บันทึกข้อมูล
             DataManager.save('sales', sales);
             DataManager.save('saleIdCounter', saleIdCounter);
-
-                // ซิงค์การขายกับ Google Sheets
-    DataManager.syncSingleItem('sale', sale);
 
             // สร้างใบเสร็จ
             const receiptHTML = generateReceipt(sale);
@@ -1777,15 +1688,6 @@ class DataManager {
             const wholesalePrice = parseFloat(document.getElementById('newProductWholesalePrice').value) || 0;
             const promoPrice = parseFloat(document.getElementById('newProductPromoPrice').value) || 0;
 
-                const newProduct = {
-        id: productIdCounter++,
-        name, code, category, unitQty, boxQty,
-        retailPrice, wholesalePrice, promoPrice
-    };
-
-                products.push(newProduct);
-    filteredProducts = [...products];
-
             if (!name || !code || retailPrice <= 0) {
                 alert('กรุณากรอกข้อมูลให้ครบถ้วนและถูกต้อง');
                 return;
@@ -1797,6 +1699,17 @@ class DataManager {
                 return;
             }
 
+            const newProduct = {
+                id: productIdCounter++,
+                name,
+                code,
+                category,
+                unitQty,
+                boxQty,
+                retailPrice,
+                wholesalePrice,
+                promoPrice
+            };
 
             products.push(newProduct);
             filteredProducts = [...products];
@@ -1804,9 +1717,6 @@ class DataManager {
             // บันทึกข้อมูล
             DataManager.save('products', products);
             DataManager.save('productIdCounter', productIdCounter);
-
-                // ซิงค์รายการเดียวกับ Google Sheets
-    DataManager.syncSingleItem('product', newProduct);
             
             // ล้างฟอร์ม
             document.getElementById('newProductName').value = '';
@@ -1875,21 +1785,22 @@ class DataManager {
             const phone = document.getElementById('newCustomerPhone').value.trim();
             const taxId = document.getElementById('newCustomerTaxId').value.trim();
 
-                const newCustomer = { id: customerIdCounter++, name, address, phone, taxId };
-    customers.push(newCustomer);
-
             if (!name) {
                 alert('กรุณากรอกชื่อลูกค้า');
                 return;
             }
 
+            const newCustomer = {
+                id: customerIdCounter++,
+                name,
+                address,
+                phone,
+                taxId
+            };
 
             customers.push(newCustomer);
             DataManager.save('customers', customers);
             DataManager.save('customerIdCounter', customerIdCounter);
-
-                // ซิงค์กับ Google Sheets
-    DataManager.syncSingleItem('customer', newCustomer);
             
             // ล้างฟอร์ม
             document.getElementById('newCustomerName').value = '';
@@ -2470,9 +2381,7 @@ class DataManager {
             document.getElementById('loginUsername').focus();
         }, 100);
     </script>
-
-      <!-- ✅ เชื่อม JavaScript หลัง DOM โหลดครบ -->
-  <script src="pos-system.js"></script>
+    <script src="pos-system.js"></script>
 </body>
 </html>
                 
