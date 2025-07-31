@@ -1052,32 +1052,120 @@
     </div>
 
     <script>
-        // ระบบจัดการข้อมูล LocalStorage
-        class DataManager {
-            static save(key, data) {
-                try {
-                    document.cookie = `${key}=${JSON.stringify(data)}; expires=Fri, 31 Dec 9999 23:59:59 GMT; path=/`;
-                } catch (error) {
-                    console.warn('Cannot save to cookie, using memory storage');
-                }
-            }
+// URL ของ Google Apps Script Web App
+const GOOGLE_SCRIPT_URL = 'YOUR_GOOGLE_SCRIPT_WEB_APP_URL_HERE';
 
-            static load(key, defaultValue = null) {
-                try {
-                    const cookies = document.cookie.split(';');
-                    for (let cookie of cookies) {
-                        const [name, value] = cookie.trim().split('=');
-                        if (name === key) {
-                            return JSON.parse(decodeURIComponent(value));
-                        }
-                    }
-                    return defaultValue;
-                } catch (error) {
-                    console.warn('Cannot load from cookie, using default value');
-                    return defaultValue;
+// ระบบจัดการข้อมูล LocalStorage + Google Sheets
+class DataManager {
+    static save(key, data) {
+        try {
+            // บันทึกใน cookie (local backup)
+            document.cookie = `${key}=${JSON.stringify(data)}; expires=Fri, 31 Dec 9999 23:59:59 GMT; path=/`;
+            
+            // ซิงค์กับ Google Sheets (async)
+            this.syncToGoogleSheets(key, data);
+        } catch (error) {
+            console.warn('Cannot save to cookie:', error);
+        }
+    }
+
+    static load(key, defaultValue = null) {
+        try {
+            const cookies = document.cookie.split(';');
+            for (let cookie of cookies) {
+                const [name, value] = cookie.trim().split('=');
+                if (name === key) {
+                    return JSON.parse(decodeURIComponent(value));
                 }
             }
+            return defaultValue;
+        } catch (error) {
+            console.warn('Cannot load from cookie:', error);
+            return defaultValue;
         }
+    }
+
+    static async syncToGoogleSheets(key, data) {
+        if (!GOOGLE_SCRIPT_URL) return;
+        
+        try {
+            let action = '';
+            let payload = {};
+            
+            switch(key) {
+                case 'products':
+                    // ซิงค์ทีละรายการเมื่อมีการเพิ่ม/แก้ไข
+                    return;
+                case 'customers':
+                    return;
+                case 'sales':
+                    return;
+                case 'users':
+                    return;
+                case 'settings':
+                    action = 'saveSettings';
+                    payload = { settings: data };
+                    break;
+                default:
+                    return;
+            }
+            
+            await fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+        } catch (error) {
+            console.warn('Sync to Google Sheets failed:', error);
+        }
+    }
+
+    // ซิงค์ข้อมูลเฉพาะรายการ
+    static async syncSingleItem(type, item) {
+        if (!GOOGLE_SCRIPT_URL) return;
+        
+        try {
+            const actions = {
+                'product': 'saveProduct',
+                'customer': 'saveCustomer',
+                'sale': 'saveSale',
+                'user': 'saveUser'
+            };
+            
+            const action = actions[type];
+            if (!action) return;
+            
+            const payload = { action, [type]: item };
+            
+            const response = await fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            
+            const result = await response.json();
+            if (!result.success) {
+                console.error('Sync failed:', result.error);
+            }
+        } catch (error) {
+            console.warn('Sync single item failed:', error);
+        }
+    }
+
+    // ดึงข้อมูลจาก Google Sheets
+    static async loadFromGoogleSheets() {
+        if (!GOOGLE_SCRIPT_URL) return null;
+        
+        try {
+            const response = await fetch(GOOGLE_SCRIPT_URL + '?action=getAllData');
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.warn('Load from Google Sheets failed:', error);
+            return null;
+        }
+    }
+}
 
         // ข้อมูลผู้ใช้เริ่มต้น
         let users = DataManager.load('users', [
