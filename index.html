@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <script src="datamanager.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ball Build Supply - POS System</title>
@@ -732,21 +731,6 @@
                 box-shadow: none;
             }
         }
-        .sync-btn {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border: none;
-    padding: 8px 15px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 14px;
-    margin: 0 5px;
-    transition: transform 0.2s;
-}
-
-.sync-btn:hover {
-    transform: translateY(-2px);
-}
     </style>
 </head>
 <body>
@@ -891,12 +875,6 @@
                     </div>
                 </div>
                 <button class="btn-primary" onclick="addProduct()">เพิ่มสินค้า</button>
-                <button onclick="syncToGoogle()" class="sync-btn">
-    📤 ซิงค์ข้อมูล
-</button>
-<button onclick="loadFromGoogle()" class="sync-btn">
-    📥 โหลดข้อมูล
-</button>
             </div>
 
             <div id="productList">
@@ -1074,30 +1052,11 @@
     </div>
 
     <script>
-
-            
-        javascript// เก่า
-localStorage.setItem('products', JSON.stringify(products));
-const savedProducts = JSON.parse(localStorage.getItem('products') || '[]');
-
-// ใหม่
-DataManager.save('products', products);
-const savedProducts = DataManager.load('products', []);
-        
-        // ระบบจัดการข้อมูล LocalStorage และ Google Sheets
+        // ระบบจัดการข้อมูล LocalStorage
         class DataManager {
-            static GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzgXdar8QI9OjNH641UwYp0SHGbi-zEjRErY8Qhz7guoz30iZuqbyMaHeayG66ybkU/exec';
-            static syncEnabled = true;
-            static lastSyncTime = null;
-
             static save(key, data) {
                 try {
                     document.cookie = `${key}=${JSON.stringify(data)}; expires=Fri, 31 Dec 9999 23:59:59 GMT; path=/`;
-                    
-                    // Auto-sync กับ Google Sheets
-                    if (this.syncEnabled && currentUser) {
-                        this.autoSync();
-                    }
                 } catch (error) {
                     console.warn('Cannot save to cookie, using memory storage');
                 }
@@ -1118,233 +1077,8 @@ const savedProducts = DataManager.load('products', []);
                     return defaultValue;
                 }
             }
-
-            // ซิงค์ข้อมูลกับ Google Sheets
-            static async syncToGoogleSheets() {
-                if (!this.syncEnabled) return { success: false, message: 'Sync disabled' };
-                
-                try {
-                    // แสดงสถานะการซิงค์
-                    this.showSyncStatus('กำลังซิงค์ข้อมูล...', 'loading');
-                    
-                    const promises = [
-                        this.syncProducts(),
-                        this.syncCustomers(),
-                        this.syncSales(),
-                        this.syncUsers()
-                    ];
-
-                    await Promise.all(promises);
-                    
-                    this.lastSyncTime = new Date();
-                    localStorage.setItem('lastSyncTime', this.lastSyncTime.toISOString());
-                    
-                    this.showSyncStatus('ซิงค์ข้อมูลสำเร็จ', 'success');
-                    return { success: true, message: 'Sync completed successfully' };
-                    
-                } catch (error) {
-                    console.error('Sync error:', error);
-                    this.showSyncStatus('ซิงค์ข้อมูลล้มเหลว', 'error');
-                    return { success: false, message: error.message };
-                }
-            }
-
-            static async syncProducts() {
-                const response = await fetch(this.GOOGLE_SCRIPT_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        action: 'sync_products',
-                        products: products
-                    })
-                });
-                return await response.json();
-            }
-
-            static async syncCustomers() {
-                const response = await fetch(this.GOOGLE_SCRIPT_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        action: 'sync_customers',
-                        customers: customers
-                    })
-                });
-                return await response.json();
-            }
-
-            static async syncSales() {
-                const response = await fetch(this.GOOGLE_SCRIPT_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        action: 'sync_sales',
-                        sales: sales
-                    })
-                });
-                return await response.json();
-            }
-
-            static async syncUsers() {
-                const response = await fetch(this.GOOGLE_SCRIPT_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        action: 'sync_users',
-                        users: users
-                    })
-                });
-                return await response.json();
-            }
-
-            // โหลดข้อมูลจาก Google Sheets
-            static async loadFromGoogleSheets() {
-                if (!this.syncEnabled) return { success: false, message: 'Sync disabled' };
-                
-                try {
-                    this.showSyncStatus('กำลังโหลดข้อมูลจาก Google Sheets...', 'loading');
-                    
-                    const response = await fetch(`${this.GOOGLE_SCRIPT_URL}?action=get_all_data`);
-                    const result = await response.json();
-                    
-                    if (result.success && result.data) {
-                        // อัปเดตข้อมูลท้องถิ่น
-                        if (result.data.products) {
-                            products = result.data.products;
-                            filteredProducts = [...products];
-                            localStorage.setItem('products', JSON.stringify(products));
-                        }
-                        
-                        if (result.data.customers) {
-                            customers = result.data.customers;
-                            localStorage.setItem('customers', JSON.stringify(customers));
-                        }
-                        
-                        this.showSyncStatus('โหลดข้อมูลสำเร็จ', 'success');
-                        return { success: true, message: 'Data loaded successfully' };
-                    } else {
-                        throw new Error(result.message || 'Failed to load data');
-                    }
-                    
-                } catch (error) {
-                    console.error('Load error:', error);
-                    this.showSyncStatus('โหลดข้อมูลล้มเหลว', 'error');
-                    return { success: false, message: error.message };
-                }
-            }
-
-            // Auto-sync (จำกัดความถี่)
-            static autoSync() {
-                if (this.syncTimeout) clearTimeout(this.syncTimeout);
-                
-                this.syncTimeout = setTimeout(() => {
-                    this.syncToGoogleSheets();
-                }, 5000); // รอ 5 วินาทีก่อนซิงค์
-            }
-
-            // แสดงสถานะการซิงค์
-            static showSyncStatus(message, type = 'info') {
-                // ลบข้อความเก่า
-                const existingStatus = document.getElementById('syncStatus');
-                if (existingStatus) existingStatus.remove();
-                
-                // สร้างข้อความใหม่
-                const statusDiv = document.createElement('div');
-                statusDiv.id = 'syncStatus';
-                statusDiv.style.cssText = `
-                    position: fixed;
-                    top: 80px;
-                    right: 20px;
-                    padding: 10px 15px;
-                    border-radius: 8px;
-                    font-size: 14px;
-                    font-weight: bold;
-                    z-index: 1001;
-                    max-width: 300px;
-                    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-                `;
-                
-                switch(type) {
-                    case 'loading':
-                        statusDiv.style.backgroundColor = '#FFF3E0';
-                        statusDiv.style.color = '#FF9800';
-                        statusDiv.innerHTML = `⏳ ${message}`;
-                        break;
-                    case 'success':
-                        statusDiv.style.backgroundColor = '#E8F5E8';
-                        statusDiv.style.color = '#4CAF50';
-                        statusDiv.innerHTML = `✅ ${message}`;
-                        break;
-                    case 'error':
-                        statusDiv.style.backgroundColor = '#FFEBEE';
-                        statusDiv.style.color = '#F44336';
-                        statusDiv.innerHTML = `❌ ${message}`;
-                        break;
-                    default:
-                        statusDiv.style.backgroundColor = '#E3F2FD';
-                        statusDiv.style.color = '#2196F3';
-                        statusDiv.innerHTML = `ℹ️ ${message}`;
-                }
-                
-                document.body.appendChild(statusDiv);
-                
-                // ลบข้อความหลัง 3 วินาที
-                setTimeout(() => {
-                    if (statusDiv.parentNode) {
-                        statusDiv.remove();
-                    }
-                }, 3000);
-            }
-
-            // ทดสอบการเชื่อมต่อ
-            static async testConnection() {
-                try {
-                    const response = await fetch(`${this.GOOGLE_SCRIPT_URL}?action=test`);
-                    const result = await response.json();
-                    return result;
-                } catch (error) {
-                    return { success: false, message: error.message };
-                }
-            }
         }
 
-        // ฟังก์ชันซิงค์ข้อมูลไป Google Sheets
-async function syncToGoogle() {
-    const result = await DataManager.syncToGoogleSheets();
-    if (result.success) {
-        alert('ซิงค์ข้อมูลสำเร็จ!');
-    } else {
-        alert('ซิงค์ข้อมูลล้มเหลว: ' + result.message);
-    }
-}
-
-// ฟังก์ชันโหลดข้อมูลจาก Google Sheets
-async function loadFromGoogle() {
-    const result = await DataManager.loadFromGoogleSheets();
-    if (result.success) {
-        // รีเฟรชหน้าจอหรืออัปเดต UI
-        location.reload();
-    } else {
-        alert('โหลดข้อมูลล้มเหลว: ' + result.message);
-    }
-}
-
-// ทดสอบการเชื่อมต่อ
-async function testConnection() {
-    const result = await DataManager.testConnection();
-    alert(result.message);
-}
-
-        javascriptfunction saveProduct() {
-    // บันทึกข้อมูลเก่า
-    products.push(newProduct);
-    
-    // ใช้ DataManager แทน localStorage
-    DataManager.save('products', products);
-    
-    // ข้อมูลจะ auto-sync เองตาม DataManager
-}
-        
         // ข้อมูลผู้ใช้เริ่มต้น
         let users = DataManager.load('users', [
             { id: 1, username: 'admin', password: 'admin', fullName: 'ผู้จัดการระบบ', role: 'admin', active: true },
@@ -1711,7 +1445,7 @@ async function testConnection() {
                 cartItem.innerHTML = `
                     <div class="cart-item-header">
                         <div class="item-name">${item.name} (${item.code})</div>
-                        < class="remove-btn" onclick="removeFromCart(${index})">ลบ</button>
+                        <button class="remove-btn" onclick="removeFromCart(${index})">ลบ</button>
                     </div>
                     
                     <div class="cart-controls">
