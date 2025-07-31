@@ -608,7 +608,7 @@ let nextSaleId = 1;
 // เริ่มต้นระบบ
 document.addEventListener('DOMContentLoaded', async function() {
     loadData();
-    await fetchAllDataBeforeLogin();  // 🔁 โหลด users จาก Google Sheets ก่อน
+    await fetchAllDataBeforeLogin();
     showLoginScreen();
 });
 
@@ -692,10 +692,11 @@ async function fetchAllDataBeforeLogin() {
     } catch (err) {
         console.error('โหลดข้อมูลล้มเหลว:', err);
     }
+}
 
 // ระบบเข้าสู่ระบบ
 function showLoginScreen() {
-    document.body.innerHTML = `
+    document.body.innerHTML = ` ... `;
         <div class="login-container">
             <div class="login-form">
                 <div class="logo">
