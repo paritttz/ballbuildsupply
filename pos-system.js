@@ -606,8 +606,9 @@ let nextCustomerId = 1;
 let nextSaleId = 1;
 
 // เริ่มต้นระบบ
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     loadData();
+    await fetchAllDataBeforeLogin();  // 🔁 โหลด users จาก Google Sheets ก่อน
     showLoginScreen();
 });
 
@@ -671,6 +672,26 @@ async function testConnection() {
     const result = await DataManager.testConnection();
     showNotification(result.message, result.success ? 'success' : 'error');
 }
+
+async function fetchAllDataBeforeLogin() {
+    try {
+        const response = await fetch(`${DataManager.GOOGLE_SCRIPT_URL}?action=get_all_data`);
+        const result = await response.json();
+        if (result.success && result.data) {
+            users = result.data.users || [];
+            products = result.data.products || [];
+            customers = result.data.customers || [];
+            sales = result.data.sales || [];
+            DataManager.save('users', users);
+            DataManager.save('products', products);
+            DataManager.save('customers', customers);
+            DataManager.save('sales', sales);
+        } else {
+            console.error('โหลดข้อมูลล้มเหลว: ', result.message);
+        }
+    } catch (err) {
+        console.error('โหลดข้อมูลล้มเหลว:', err);
+    }
 
 // ระบบเข้าสู่ระบบ
 function showLoginScreen() {
